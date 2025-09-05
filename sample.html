@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Opportunity Matching Pipeline</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: "Calm Harmony" - A calming and professional theme with a warm neutral background, deep blue for primary elements, and a subtle teal for accents. -->
+    <!-- Application Structure Plan: The application is designed as a single-page, vertical scrolling narrative. This structure is the most intuitive for presenting a linear, step-by-step process. A sticky side navigation allows users to either follow the flow sequentially or jump to a specific phase of interest. Each of the 7 phases is a distinct section containing descriptive text and a bespoke interactive visualization. This design was chosen to make a complex, multi-stage data pipeline easily understandable by breaking it into manageable, interactive chapters, prioritizing user comprehension and engagement over a dense, static report. -->
+    <!-- Visualization & Content Choices: 
+        1. Data Cleaning: Goal: Inform. Viz: Interactive 'before/after' text block. Interaction: Button click. Justification: Concretely shows the value of standardization. Method: Vanilla JS DOM manipulation.
+        2. Semantic Meaning: Goal: Explain. Viz: HTML/CSS diagram showing text-to-vector conversion. Interaction: Hover effects. Justification: Visualizes the abstract concept of embeddings. Method: HTML/CSS.
+        3. Ranking: Goal: Organize. Viz: Funnel diagram. Interaction: Hover tooltips. Justification: Classic, intuitive way to show filtering. Method: HTML/CSS with JS for interactivity.
+        4. Prediction: Goal: Compare. Viz: Interactive sliders and a dynamic bar chart. Interaction: User-controlled sliders updating a chart. Justification: Engages users in understanding the predictive model's logic. Library: Chart.js.
+        5. Allocation: Goal: Relationships. Viz: Animated node-link diagram. Interaction: Button click to trigger animation. Justification: Simplifies the complex concept of optimal, fair allocation. Method: HTML/CSS/JS.
+        6. Gap-Filling: Goal: Change. Viz: Interactive grid of job slots. Interaction: Button click to simulate rejection and instant refilling. Justification: Clearly demonstrates the system's real-time responsiveness. Method: Vanilla JS DOM manipulation.
+        7. Learning: Goal: Change over time. Viz: Circular feedback loop diagram and a dynamic line chart. Interaction: Button click to simulate progress. Justification: Shows the long-term, self-improving nature of the system. Library: Chart.js.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8; /* Warm Neutral */
+            color: #1A202C;
+        }
+        .nav-link {
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-link.active, .nav-link:hover {
+            color: #2D3748;
+            background-color: #E2E8F0;
+            transform: translateX(4px);
+        }
+        .card {
+            background-color: #FFFFFF;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #E2E8F0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: #2B6CB0; /* Deep Blue */
+            color: #FFFFFF;
+        }
+        .btn-primary:hover {
+            background-color: #2C5282;
+        }
+        .btn-secondary {
+            background-color: #EDF2F7;
+            color: #2D3748;
+        }
+        .btn-secondary:hover {
+            background-color: #E2E8F0;
+        }
+        .flow-line {
+            width: 2px;
+            background-color: #CBD5E0;
+            height: 100%;
+            position: absolute;
+            left: 1.2rem;
+            top: 0;
+            z-index: -1;
+        }
+         .dot {
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 9999px;
+            background-color: #FFFFFF;
+            border: 3px solid #2B6CB0;
+            z-index: 1;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="relative min-h-screen md:flex">
+        <aside class="sticky top-0 h-screen bg-gray-50/50 w-64 hidden md:block p-6 border-r border-gray-200">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">Solution Flow</h2>
+            <nav id="desktop-nav" class="space-y-2">
+                <a href="#phase1" class="nav-link block p-2 rounded-md font-medium text-gray-500">1. Data Standardization</a>
+                <a href="#phase2" class="nav-link block p-2 rounded-md font-medium text-gray-500">2. Semantic Understanding</a>
+                <a href="#phase3" class="nav-link block p-2 rounded-md font-medium text-gray-500">3. Find & Rank Fits</a>
+                <a href="#phase4" class="nav-link block p-2 rounded-md font-medium text-gray-500">4. Predict Success</a>
+                <a href="#phase5" class="nav-link block p-2 rounded-md font-medium text-gray-500">5. Fair Allocation</a>
+                <a href="#phase6" class="nav-link block p-2 rounded-md font-medium text-gray-500">6. Instant Gap-Filling</a>
+                <a href="#phase7" class="nav-link block p-2 rounded-md font-medium text-gray-500">7. Continuous Learning</a>
+            </nav>
+        </aside>
+
+        <main class="flex-1 p-4 sm:p-6 lg:p-10">
+            <header class="mb-12 text-center">
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">From Application to Opportunity</h1>
+                <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">An interactive walkthrough of how our system intelligently and fairly connects students with internships, step by step.</p>
+            </header>
+
+            <div class="space-y-24">
+                
+                <section id="phase1" class="phase card p-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">1. Clean & Standardize Data</h3>
+                    <p class="text-gray-600 mb-6">We first take in all raw data from student applications and internship postings. The system automatically cleans, validates, and standardizes this information. The outcome: messy inputs are converted into a clean, machine-readable format.</p>
+                    <div class="grid md:grid-cols-2 gap-6 items-center">
+                        <div>
+                            <h4 class="font-semibold mb-2">Interactive Demo</h4>
+                            <p class="text-sm text-gray-500 mb-4">Click the button to see how a raw profile is cleaned and enhanced.</p>
+                             <div id="p1-raw" class="p-4 bg-gray-100 rounded-lg font-mono text-sm text-gray-700">
+                                <p>&gt; "JS ninja, BE student from village near Pune. Expert in react."</p>
+                            </div>
+                            <div class="my-4 text-center text-gray-400">&darr;</div>
+                            <div id="p1-processed" class="p-4 bg-teal-50 border border-teal-200 rounded-lg font-mono text-sm text-teal-800 opacity-0 transition-opacity duration-500">
+                                <p>{ skill: "JavaScript Developer",</p>
+                                <p>&nbsp;&nbsp;education: "B.Eng",</p>
+                                <p>&nbsp;&nbsp;location_flag: "Rural",</p>
+                                <p>&nbsp;&nbsp;tech_stack: ["React"] }</p>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <button id="p1-btn" class="btn btn-primary w-full md:w-auto">Process Data</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="phase2" class="phase card p-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">2. Understand True Meaning</h3>
+                    <p class="text-gray-600 mb-6">Instead of just matching keywords, the system reads each profile and job description to understand its true essence. It creates a unique digital "fingerprint" (an embedding) for every student and every opportunity, leading to a deep, semantic understanding that recognizes strong matches even with different wording.</p>
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-6 p-4">
+                        <div class="text-center p-4 border-2 border-dashed rounded-lg w-full md:w-1/3">
+                            <h5 class="font-semibold">Applicant Profile</h5>
+                            <p class="text-sm text-gray-500 mt-1">"Frontend Developer with React skills"</p>
+                        </div>
+                        <div class="text-3xl text-gray-400 transform rotate-90 md:rotate-0">&rarr;</div>
+                        <div class="text-center p-4 bg-gray-800 text-white rounded-lg w-full md:w-1/3 shadow-lg">
+                            <h5 class="font-semibold">Vector "Fingerprint"</h5>
+                            <p class="text-sm text-gray-300 mt-1 font-mono">[0.12, -0.45, ...]</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="phase3" class="phase card p-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">3. Find & Rank the Best Fits</h3>
+                    <p class="text-gray-600 mb-6">Using the fingerprints, the system instantly scans millions of possibilities to find the most relevant matches for each student. It then scores and ranks these matches, creating a personalized shortlist for every user.</p>
+                    <div class="flex justify-center p-4">
+                        <div class="w-full max-w-md text-center">
+                           <div class="relative h-12 bg-blue-200 flex items-center justify-center rounded-t-lg">
+                               <span class="font-semibold text-blue-800">1,000,000+ Opportunities</span>
+                           </div>
+                           <div class="relative mx-auto" style="border-left: 50px solid transparent; border-right: 50px solid transparent; border-top: 30px solid #BFDBFE;"></div>
+                           <div class="relative h-12 bg-blue-300 flex items-center justify-center">
+                                <span class="font-semibold text-blue-800">Top 500 Relevant Matches</span>
+                           </div>
+                           <div class="relative mx-auto" style="border-left: 50px solid transparent; border-right: 50px solid transparent; border-top: 30px solid #93C5FD;"></div>
+                           <div class="relative h-12 bg-blue-400 flex items-center justify-center rounded-b-lg">
+                               <span class="font-semibold text-white">Top 10 Ranked Shortlist</span>
+                           </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="phase4" class="phase card p-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">4. Predict Real-World Success</h3>
+                    <p class="text-gray-600 mb-6">A skills match isn't enough. The system predicts how likely a student is to accept an offer by considering practical factors like location and stipend. This prioritizes opportunities that are both a great fit and realistically likely to be accepted.</p>
+                    <div class="grid md:grid-cols-2 gap-8 items-center">
+                         <div>
+                            <h4 class="font-semibold mb-2">Candidate A</h4>
+                            <label class="block text-sm font-medium text-gray-700">Skill Match: <span id="p4-skill-val-a">90</span>%</label>
+                            <input id="p4-skill-a" type="range" min="0" max="100" value="90" class="w-full">
+                            <label class="block text-sm font-medium text-gray-700 mt-2">Distance: <span id="p4-dist-val-a">800</span> km</label>
+                            <input id="p4-dist-a" type="range" min="0" max="1000" value="800" class="w-full">
+                            
+                            <h4 class="font-semibold mb-2 mt-6">Candidate B</h4>
+                            <label class="block text-sm font-medium text-gray-700">Skill Match: <span id="p4-skill-val-b">85</span>%</label>
+                            <input id="p4-skill-b" type="range" min="0" max="100" value="85" class="w-full">
+                            <label class="block text-sm font-medium text-gray-700 mt-2">Distance: <span id="p4-dist-val-b">10</span> km</label>
+                            <input id="p4-dist-b" type="range" min="0" max="1000" value="10" class="w-full">
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="p4-chart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="phase5" class="phase card p-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">5. The Global Planner: Fair & Optimal Allocation</h3>
+                    <p class="text-gray-600 mb-6">This is the core of the system. It looks at the entire pool of students, internships, and fairness quotas all at once. It then runs a complex optimization to assign students to roles in a way that is best for everyone involved, ensuring fairness rules are perfectly met for a globally optimal and equitable distribution.</p>
+                    <div class="flex justify-center items-center flex-col">
+                        <div class="flex items-center justify-around w-full max-w-2xl mb-4">
+                           <div class="text-center">
+                                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-xl">🧑‍🎓</div>
+                                <div class="font-semibold mt-1">Candidates</div>
+                           </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center text-xl">📜</div>
+                                <div class="font-semibold mt-1">Quotas</div>
+                           </div>
+                           <div class="text-center">
+                                <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-xl">🏢</div>
+                                <div class="font-semibold mt-1">Internships</div>
+                           </div>
+                        </div>
+                        <div id="p5-allocation" class="relative w-full max-w-2xl h-16 transition-all duration-1000">
+                        </div>
+                        <button id="p5-btn" class="btn btn-primary mt-6">Run Optimal Allocation</button>
+                    </div>
+                </section>
+
+                <section id="phase6" class="phase card p-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">6. Instant Gap-Filling</h3>
+                    <p class="text-gray-600 mb-6">If a student declines an offer, a valuable slot opens up. The system immediately detects this and instantly offers the position to the next most suitable candidate, filling vacancies in real-time to maximize successful placements.</p>
+                     <div class="flex justify-center items-center flex-col">
+                        <div id="p6-slots" class="grid grid-cols-4 gap-4">
+                        </div>
+                        <p id="p6-message" class="mt-4 text-gray-600 h-6"></p>
+                    </div>
+                </section>
+
+                <section id="phase7" class="phase card p-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">7. Continuous Learning & Improvement</h3>
+                    <p class="text-gray-600 mb-6">The system learns from every single result—every acceptance, rejection, and outcome. It constantly audits itself for fairness and updates its models to become more intelligent and effective over time, creating an ever-evolving ecosystem that gets smarter with each cycle.</p>
+                     <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <div class="flex items-center justify-center">
+                            <div class="relative w-48 h-48">
+                                <div class="absolute inset-0 border-4 border-dashed border-gray-300 rounded-full"></div>
+                                <div class="absolute top-1/2 left-0 -translate-y-1/2 text-center">
+                                    <div class="p-2 bg-gray-100 rounded-full text-sm">Deploy</div>
+                                </div>
+                                 <div class="absolute top-0 left-1/2 -translate-x-1/2 text-center">
+                                    <div class="p-2 bg-gray-100 rounded-full text-sm">Track</div>
+                                </div>
+                                <div class="absolute top-1/2 right-0 -translate-y-1/2 text-center">
+                                    <div class="p-2 bg-gray-100 rounded-full text-sm">Retrain</div>
+                                </div>
+                                <div class="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
+                                    <div class="p-2 bg-gray-100 rounded-full text-sm">Analyze</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="p7-chart"></canvas>
+                        </div>
+                    </div>
+                     <div class="text-center mt-6">
+                        <button id="p7-btn" class="btn btn-primary">Simulate Next Cycle</button>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // Phase 1: Data Cleaning
+    const p1Btn = document.getElementById('p1-btn');
+    const p1Processed = document.getElementById('p1-processed');
+    p1Btn.addEventListener('click', () => {
+        p1Processed.classList.toggle('opacity-0');
+        p1Btn.textContent = p1Processed.classList.contains('opacity-0') ? 'Process Data' : 'Reset';
+    });
+
+    // Phase 4: Prediction Chart
+    const p4SkillA = document.getElementById('p4-skill-a');
+    const p4DistA = document.getElementById('p4-dist-a');
+    const p4SkillB = document.getElementById('p4-skill-b');
+    const p4DistB = document.getElementById('p4-dist-b');
+    const p4SkillValA = document.getElementById('p4-skill-val-a');
+    const p4DistValA = document.getElementById('p4-dist-val-a');
+    const p4SkillValB = document.getElementById('p4-skill-val-b');
+    const p4DistValB = document.getElementById('p4-dist-val-b');
+
+    const p4Ctx = document.getElementById('p4-chart').getContext('2d');
+    const p4Chart = new Chart(p4Ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Candidate A', 'Candidate B'],
+            datasets: [{
+                label: 'Utility Score',
+                data: [0, 0],
+                backgroundColor: ['rgba(59, 130, 246, 0.5)', 'rgba(20, 184, 166, 0.5)'],
+                borderColor: ['rgba(59, 130, 246, 1)', 'rgba(20, 184, 166, 1)'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, max: 100 }
+            },
+            plugins: {
+                legend: { display: false },
+                title: { display: true, text: 'Utility Score = Skill Match × Join Probability' }
+            }
+        }
+    });
+
+    function updateP4Chart() {
+        const skillA = parseInt(p4SkillA.value);
+        const distA = parseInt(p4DistA.value);
+        const skillB = parseInt(p4SkillB.value);
+        const distB = parseInt(p4DistB.value);
+
+        p4SkillValA.textContent = skillA;
+        p4DistValA.textContent = distA;
+        p4SkillValB.textContent = skillB;
+        p4DistValB.textContent = distB;
+
+        const probJoinA = Math.max(0, 1 - (distA / 1000));
+        const probJoinB = Math.max(0, 1 - (distB / 1000));
+
+        const utilityA = skillA * probJoinA;
+        const utilityB = skillB * probJoinB;
+
+        p4Chart.data.datasets[0].data[0] = utilityA.toFixed(1);
+        p4Chart.data.datasets[0].data[1] = utilityB.toFixed(1);
+        p4Chart.update();
+    }
+
+    [p4SkillA, p4DistA, p4SkillB, p4DistB].forEach(el => el.addEventListener('input', updateP4Chart));
+    updateP4Chart();
+
+    // Phase 5: Allocation
+    const p5Btn = document.getElementById('p5-btn');
+    const p5Allocation = document.getElementById('p5-allocation');
+    p5Btn.addEventListener('click', () => {
+        p5Allocation.innerHTML = `
+            <div class="absolute top-1/2 left-0 -translate-y-1/2 w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-xl">🧑‍🎓</div>
+            <div class="absolute top-1/2 right-0 -translate-y-1/2 w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-xl">🏢</div>
+            <svg class="w-full h-full"><line x1="24" y1="50%" x2="calc(100% - 24px)" y2="50%" stroke="#2B6CB0" stroke-width="2" stroke-dasharray="5,5"><animate attributeName="stroke-dashoffset" from="100" to="0" dur="1s" fill="freeze" /></line></svg>
+        `;
+    });
+
+    // Phase 6: Gap Filling
+    const p6SlotsContainer = document.getElementById('p6-slots');
+    const p6Message = document.getElementById('p6-message');
+    let p6Slots = [
+        { id: 1, state: 'filled', emoji: '👩‍💻' }, { id: 2, state: 'filled', emoji: '👨‍🔬' },
+        { id: 3, state: 'filled', emoji: '🧑‍🎨' }, { id: 4, state: 'filled', emoji: '👩‍💼' },
+    ];
+    const p6Waitlist = ['👨‍🚀', '🧑‍🏫', '👩‍⚖️'];
+
+    function renderP6Slots() {
+        p6SlotsContainer.innerHTML = '';
+        p6Slots.forEach(slot => {
+            const slotEl = document.createElement('div');
+            slotEl.className = `w-16 h-16 rounded-lg flex items-center justify-center text-3xl cursor-pointer transition-all ${slot.state === 'filled' ? 'bg-teal-500 text-white' : 'bg-gray-200'}`;
+            slotEl.textContent = slot.state === 'filled' ? slot.emoji : '';
+            if (slot.state === 'filled') {
+                slotEl.addEventListener('click', () => rejectOffer(slot.id));
+            }
+            p6SlotsContainer.appendChild(slotEl);
+        });
+    }
+
+    function rejectOffer(id) {
+        const slot = p6Slots.find(s => s.id === id);
+        if (slot && slot.state === 'filled' && p6Waitlist.length > 0) {
+            slot.state = 'empty';
+            slot.emoji = '';
+            p6Message.textContent = 'Offer rejected! Finding a new candidate...';
+            renderP6Slots();
+
+            setTimeout(() => {
+                const newCandidate = p6Waitlist.shift();
+                slot.state = 'filled';
+                slot.emoji = newCandidate;
+                p6Message.textContent = 'Vacancy filled instantly!';
+                renderP6Slots();
+            }, 1500);
+        } else if (p6Waitlist.length === 0) {
+             p6Message.textContent = 'No candidates on the waitlist.';
+        }
+    }
+    renderP6Slots();
+
+    // Phase 7: Learning Chart
+    const p7Btn = document.getElementById('p7-btn');
+    const p7Ctx = document.getElementById('p7-chart').getContext('2d');
+    const p7Data = {
+        labels: ['Cycle 1', 'Cycle 2', 'Cycle 3'],
+        datasets: [{
+            label: 'System Accuracy',
+            data: [65, 72, 78],
+            fill: true,
+            borderColor: '#38B2AC', // Muted Teal
+            backgroundColor: 'rgba(56, 178, 172, 0.1)',
+            tension: 0.4
+        }]
+    };
+    const p7Chart = new Chart(p7Ctx, {
+        type: 'line',
+        data: p7Data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: false, max: 100, min: 50 } },
+            plugins: { legend: { display: false }, title: { display: true, text: 'Model Improvement Over Time' } }
+        }
+    });
+
+    p7Btn.addEventListener('click', () => {
+        const lastCycle = p7Chart.data.labels.length + 1;
+        const lastData = p7Chart.data.datasets[0].data[p7Chart.data.datasets[0].data.length - 1];
+        if(lastCycle > 10) return;
+        
+        p7Chart.data.labels.push(`Cycle ${lastCycle}`);
+        p7Chart.data.datasets[0].data.push(Math.min(100, lastData + Math.random() * 5 + 2));
+        p7Chart.update();
+    });
+
+    // Navigation scrollspy
+    const sections = document.querySelectorAll('.phase');
+    const navLinks = document.querySelectorAll('.nav-link');
+    window.addEventListener('scroll', () => {
+        let current = '';
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (pageYOffset >= sectionTop - 100) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href').substring(1) === current) {
+                link.classList.add('active');
+            }
+        });
+    });
+});
+</script>
+
+</body>
+</html>
